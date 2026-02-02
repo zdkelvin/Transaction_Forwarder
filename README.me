@@ -1,0 +1,23 @@
+1. install required Apps
+   sudo apt install python3.10 to install Python3 on Linux Server
+   sudo apt install python3-pip
+   sudo apt update
+   sudo apt install python3.10-venv
+   python3 --version
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+
+2. (Linux) Setup uvicorn service
+   sudo nano /etc/systemd/system/master.service
+   sudo systemctl daemon-reload
+   sudo systemctl start master
+   sudo systemctl enable master
+   sudo systemctl stop master
+   sudo systemctl restart master
+   sudo systemctl status master
+
+   sudo journalctl -u master.service -f
+
+3. setup server bot use port to firewall allow
+   sudo ufw allow {port}

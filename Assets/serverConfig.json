@@ -1,0 +1,7 @@
+{
+    "production_mode": true,
+    "user": "GMPay Admins/Transaction Forwarder",
+    "secret_key": "uoed/Ua1G0vuXFTJcHrqh9OCEBErWPsrEnBcJqkt0E/DaUmf+fAYYlqVYJQCZHe6lnOdsQxq5bSLgX474I1DCQ==",
+    "domain_production": "https://portal.payloh.com/api/",
+    "domain_uat": "https://uat-potal.payloh.com/api/"
+}

@@ -1,0 +1,26 @@
+{
+    "MY": {
+        "TNG": {
+            "app_name": "TNG eWallet",
+            "package_name": "my.com.tngdigital.ewallet",
+            "external_app_name": ""
+        }
+    },
+    "SG": {
+        "DBS": {
+            "app_name": "DBS digibank",
+            "package_name": "com.dbs.sg.dbsmbanking",
+            "external_app_name": "Gmail"
+        },
+        "Maribank": {
+            "app_name": "MariBank",
+            "package_name": "sg.com.maribankmobile.digitalbank",
+            "external_app_name": "Gmail"
+        },
+        "GXS": {
+            "app_name": "GXS Bank",
+            "package_name": "sg.com.gxs.app",
+            "external_app_name": "Gmail"
+        }
+    }
+}

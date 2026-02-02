@@ -1,0 +1,16 @@
+[Unit]
+Description = Transaction Forwarder System - Master Server
+After = network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/Transaction_Forwarder
+ExecStart=/root/Transaction_Forwarder/venv/bin/uvicorn masterServer:app --host 0.0.0.0 --port 7590
+Restart=always
+StandardOutput=journal
+StandardError=journal
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
