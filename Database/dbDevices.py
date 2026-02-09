@@ -157,16 +157,10 @@ class DBDevicesInfo:
             app_names = []
             for device_id, device_data in self.register_devices.items():
                 for app in device_data.apps:
-                    if app.bank_code == "Maribank":
-                        if app.external_app_name:
-                            app_names.append(app.external_app_name)
-                        else:
-                            app_names.append(app.app_name)
-                    else:
-                        if app.app_name not in app_names:
-                            app_names.append(app.app_name)
-                        if app.external_app_name and app.external_app_name not in app_names:
-                            app_names.append(app.external_app_name)
+                    if app.app_name not in app_names:
+                        app_names.append(app.app_name)
+                    if app.external_app_name and app.external_app_name not in app_names:
+                        app_names.append(app.external_app_name)
             return app_names
         except:
             return []
