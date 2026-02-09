@@ -1,7 +1,30 @@
 {
-    "6f4a4db60d72b372": {
+    "6f4a4db60d72b1233": {
         "token": "",
-        "name": "test",
-        "apps": []
+        "name": "",
+        "apps": [
+            {
+                "bank_code": "DBS",
+                "app_name": "DBS digibank",
+                "external_app_name": "Gmail",
+                "account_list": [
+                    "12345"
+                ]
+            }
+        ]
+    },
+    "4d69fbb6be6deb73": {
+        "token": "",
+        "name": "",
+        "apps": [
+            {
+                "bank_code": "Maribank",
+                "app_name": "MariBank",
+                "external_app_name": "Gmail",
+                "account_list": [
+                    "00001234"
+                ]
+            }
+        ]
     }
 }

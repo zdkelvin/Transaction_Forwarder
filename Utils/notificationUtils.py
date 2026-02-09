@@ -68,8 +68,20 @@ def parseNotification(title, content, timestamp, bank_code):
         return parseDBSNotification(title, content, timestamp)
     else:
         return None
+    
+def jsonableNotification(notification_data):
+    jsonable_data = notification_data.copy()
+    if 'amount' in jsonable_data and isinstance(jsonable_data['amount'], Decimal):
+        jsonable_data['amount'] = str(jsonable_data['amount'])
+    if 'received_dt' in jsonable_data and isinstance(jsonable_data['received_dt'], datetime):
+        jsonable_data['received_dt'] = jsonable_data['received_dt'].isoformat()
+    return jsonable_data
 
 def parseGXSNotification(title: str, content: str, timestamp: str):
+    match_titles = ["You've been paid", "GXS"]
+    if not any(match_title in title for match_title in match_titles):
+        return None
+    
     if "GXS" in title:
         notification_type = "Gmail Notification"
     else:
@@ -119,6 +131,10 @@ def parseGXSNotification(title: str, content: str, timestamp: str):
             return None
 
 def parseMariBankNotification(title: str, content: str, timestamp: str):
+    match_titles = ["You have an incoming PayNow transfer", "MariBank"]
+    if not any(match_title in title for match_title in match_titles):
+        return None
+    
     if "MariBank" in title:
         notification_type = "Gmail Notification"
     else:
@@ -158,6 +174,10 @@ def parseMariBankNotification(title: str, content: str, timestamp: str):
         return None
 
 def parseDBSNotification(title: str, content: str, timestamp: str):
+    match_titles = ["DBS digibank"]
+    if not any(match_title in title for match_title in match_titles):
+        return None
+    
     if "DBS digibank" in title:
         notification_type = "Gmail Notification"
     else:

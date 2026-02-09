@@ -136,6 +136,17 @@ class DBDevicesInfo:
             return (device, account_list)
         
         return None
+    
+    def getDeviceConfigData(self, device_id: str):
+        if device_id in self.register_devices:
+            device: Devices = self.register_devices[device_id]
+            account_list = {}
+            for app in device.apps:
+                account_list['bank_code'] = app.bank_code
+                account_list['registered_accounts'] = app.account_list
+            return (device, account_list)
+        
+        return None
         
     def getNotificationDeviceByAccount(self, bank_code, account_number):
         for device_id, device_data in self.register_devices.items():

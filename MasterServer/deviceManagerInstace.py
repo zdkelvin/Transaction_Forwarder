@@ -5,7 +5,7 @@ import Utils.generalUtils as GeneralUtils
 from loggingSystem import LoggingSystem
 from Models.apiRequestData import UpdateDeviceData, AccountRegisterationData, NotificationData
 from Models.device import Devices
-from Utils.notificationUtils import getBankCodeByNotification, parseNotification
+from Utils.notificationUtils import getBankCodeByNotification, parseNotification, jsonableNotification
 
 class DeviceManagerInstance:
     _instance = None
@@ -110,6 +110,7 @@ class DeviceManagerInstance:
             app_name = request.app_name
             bank_code = getBankCodeByNotification(app_name, request.title)
             notification_data = parseNotification(request.title, request.content, request.timestamp, bank_code)
+            notification_data_json = jsonableNotification(notification_data) if notification_data else None
             if notification_data is None:
                 LoggingSystem.apiLog(logging.WARNING, f'Failed to parse notification for app {app_name} with title: {request.title}')
                 return {"code": "400", "success": False, "message": "Invalid notification."}
@@ -126,7 +127,7 @@ class DeviceManagerInstance:
                 "device_id": device_id,
                 "device_name": device_name,
                 "bank_code": bank_code,
-                "notification_data": notification_data,
+                "notification_data": notification_data_json,
                 "notification_content_original": request.content,
                 "date_time": date_time
             }
