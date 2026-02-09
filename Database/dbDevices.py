@@ -188,3 +188,18 @@ class DBDevicesInfo:
             
             return account_list
         return {}
+    
+    def checkDuplicateAccountBinding(self, app_name, account_number):
+        bank_code = getBankCodeByAppName(app_name)
+        if bank_code is None:
+            return False
+        
+        for device_id, device_data in self.register_devices.items():
+            for app in device_data.apps:
+                if app.bank_code != bank_code:
+                    continue
+
+                if account_number in app.account_list:
+                    return True
+                
+        return False

@@ -27,6 +27,11 @@ def getCurrentDate_String():
     timeZoneDT = getCurrentTimeZoneDT()
     dtNow = timeZoneDT.strftime('%d%m%Y')
     return dtNow
+
+def convertToTimestamp(dateTime: str, format: str) -> str:
+    dt_object = datetime.datetime.strptime(dateTime, format)
+    timestamp = dt_object.timestamp()
+    return str(timestamp)
     
 async def saveTextFile(filename, content):
     async with aiofiles.open(filename, 'w') as file:

@@ -20,9 +20,9 @@ class DeviceManagerInstance:
         self.request_headers = {
             "Content-Type": "application/json",
             "User-Agent": "GMPay/TransactionForwarder",
-            "Signature": "",
-            "Date-Time": "",
-            "Device-ID": ""
+            "X-Signature": "",
+            "X-Timestamp": "",
+            "X-DeviceID": ""
         }
         self.is_production = singletonManager.DBManager().server_info_db.server_config.production_mode
         self.user = singletonManager.DBManager().server_info_db.server_config.user
@@ -58,6 +58,12 @@ class DeviceManagerInstance:
         
     async def bindDeviceAccounts(self, request: AccountRegisterationData):
         try:
+            if singletonManager.DBManager().app_notification_info_db.checkDuplicateAccountBinding(
+                request.app_name,
+                request.account_number
+            ):
+                return {"code": "409", "success": False, "message": "Account already bound on other device."}
+
             result = await singletonManager.DBManager().app_notification_info_db.bindDeviceAccounts(
                 request.device_id,
                 request.device_name,
@@ -114,7 +120,8 @@ class DeviceManagerInstance:
                 return {"code": "500", "success": False, "message": "Error when forwarding notification."}
             
             date_time = GeneralUtils.getCurrentDT_String()
-            url = f"{domain}/transaction/notificationReceived"
+            date_time_unix = GeneralUtils.convertToTimestamp(date_time, '%d%m%Y_%H%M%S')
+            url = f"{domain}create_transaction"
             payload_json = {
                 "device_id": device_id,
                 "device_name": device_name,
@@ -126,10 +133,10 @@ class DeviceManagerInstance:
             signature = f"{device_id}{date_time}{self.secret_key}{bank_code}"
             hashed_signature = GeneralUtils.hashSignature(signature)
             request_headers = self.request_headers.copy()
-            request_headers["Signature"] = hashed_signature
-            request_headers["Date-Time"] = date_time
-            request_headers["Bank-Code"] = bank_code
-            request_headers["Device-ID"] = device_id
+            request_headers["X-Signature"] = hashed_signature
+            request_headers["X-Timestamp"] = date_time_unix
+            request_headers["X-BankCode"] = bank_code
+            request_headers["X-DeviceID"] = device_id
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json = payload_json, headers = request_headers, timeout = 30)
                 if response.status_code == 200:
@@ -152,7 +159,8 @@ class DeviceManagerInstance:
             device_data = singletonManager.DBManager().app_notification_info_db.getDeviceData(device_id)
 
             date_time = GeneralUtils.getCurrentDT_String()
-            url = f"{domain}/device/accountsUpdated"
+            date_time_unix = GeneralUtils.convertToTimestamp(date_time, '%d%m%Y_%H%M%S')
+            url = f"{domain}bind_platform_bank_device"
             if device_data is None:
                 payload_json = {
                     "device_id": device_id,
@@ -169,12 +177,13 @@ class DeviceManagerInstance:
                     "device_name": device.name,
                     "accounts": account_json
                 }
+
             signature = f"{device_id}{self.secret_key}{date_time}"
             hashed_signature = GeneralUtils.hashSignature(signature)
             request_headers = self.request_headers.copy()
-            request_headers["Signature"] = hashed_signature
-            request_headers["Date-Time"] = date_time
-            request_headers["Device-ID"] = device_id
+            request_headers["X-Signature"] = hashed_signature
+            request_headers["X-Timestamp"] = date_time_unix
+            request_headers["X-Device-ID"] = device_id
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json = payload_json, headers = request_headers, timeout = 30)
                 if response.status_code == 200:
