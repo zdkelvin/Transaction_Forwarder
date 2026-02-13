@@ -16,9 +16,9 @@ class LoggingSystem:
     async def init(self, server_name):
         self.server_name = server_name
         self.current_date = GeneralUtils.getCurrentDate_String()
-        self.main_log_dir = "Logs"
+        self.main_log_dir = os.path.join(GeneralUtils.getPersistentDir(), "Logs") if GeneralUtils.deployMode() else GeneralUtils.getPath("Logs")
         self.formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        os.makedirs("Logs", exist_ok=True)
+        os.makedirs(self.main_log_dir, exist_ok=True)
         self.task_manager_logger: Dict[str, Logger] = {}
         self.newDayInit()
         
@@ -82,7 +82,7 @@ class LoggingSystem:
             print(f"Error during newDayInit: {e}")
 
     def createServerLogger(self):
-        server_log_dir = GeneralUtils.getPath(os.path.join(self.main_log_dir, "server", self.server_name))
+        server_log_dir = os.path.join(self.main_log_dir, "server", self.server_name)
         os.makedirs(server_log_dir, exist_ok=True)
         server_log_path = os.path.join(server_log_dir, f"{GeneralUtils.getCurrentDate_String()}.log")
         self.server_logger = logging.getLogger(f"{self.server_name}")
@@ -102,7 +102,7 @@ class LoggingSystem:
         self.server_logger.info(f"Date : {GeneralUtils.getCurrentDT_String()}")
 
     def createApiLogger(self):
-        api_log_dir = GeneralUtils.getPath(os.path.join(self.main_log_dir, "api", self.server_name))
+        api_log_dir = os.path.join(self.main_log_dir, "api", self.server_name)
         os.makedirs(api_log_dir, exist_ok=True)
         api_log_path = os.path.join(api_log_dir, f"{GeneralUtils.getCurrentDate_String()}.log")
         self.api_logger = logging.getLogger(f"{self.server_name}_api")
@@ -122,7 +122,7 @@ class LoggingSystem:
         self.api_logger.info(f"Date : {GeneralUtils.getCurrentDT_String()}")
             
     def createTaskLogger(self, task_manager_name: str):
-        task_manager_log_dir = GeneralUtils.getPath(os.path.join(self.main_log_dir, "taskManager", task_manager_name))
+        task_manager_log_dir = os.path.join(self.main_log_dir, "taskManager", task_manager_name)
         os.makedirs(task_manager_log_dir, exist_ok=True)
         task_manager_log_path = os.path.join(task_manager_log_dir,  f"{GeneralUtils.getCurrentDate_String()}_{task_manager_name}.log")
         if task_manager_name in self.task_manager_logger:

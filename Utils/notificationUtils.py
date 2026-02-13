@@ -90,7 +90,7 @@ def parseGXSNotification(title: str, content: str, timestamp: str):
     message = content.replace("\n", " ").strip()
     if notification_type == "Gmail Notification":
         amount_pattern = r"You received S\$([\d,]+(?:\.\d{1,2})?) in"
-        sender_pattern = r"from ([A-Z ]+) on"
+        sender_pattern = r"from\s+(.*?)\s+on"
         receiver_pattern = r"ending with (\d{4}) from"
         datetime_pattern = r"on (\d{1,2} \w+ \d{4}, \d{1,2}:\d{2}[AP]M) via"
 
@@ -131,12 +131,14 @@ def parseGXSNotification(title: str, content: str, timestamp: str):
             return None
 
 def parseMariBankNotification(title: str, content: str, timestamp: str):
-    match_titles = ["You have an incoming PayNow transfer", "MariBank"]
+    match_titles = ["You have an incoming PayNow transfer", "You have an incoming local transfer", "MariBank"]
     if not any(match_title in title for match_title in match_titles):
         return None
     
     if "MariBank" in title:
         notification_type = "Gmail Notification"
+    elif "You have an incoming PayNow transfer" in title:
+        notification_type = "Maribank App Paynow Notification"
     else:
         notification_type = "Maribank App Notification"
 
@@ -144,12 +146,17 @@ def parseMariBankNotification(title: str, content: str, timestamp: str):
 
     if notification_type == "Gmail Notification":
         amount_pattern = r"Amount: S\$([\d,]+(?:\.\d{1,2})?)"
-        sender_pattern = r"From:\s([A-Za-z ]+)(?=\sIf)"
+        sender_pattern = r"From:\s*(.+?)(?=\sIf)"
         receiver_pattern = r"Account ending (\d{4})"
         datetime_pattern = r"Transaction Time: (\d{1,2} \w{3} \d{4} \d{2}:\d{2})"
+    elif notification_type == "Maribank App Paynow Notification":
+        amount_pattern = r"S\$([\d,]+(?:\.\d{1,2})?)"
+        sender_pattern = r"^(.*?)\s+has sent you"
+        receiver_pattern = r"ending (\d{4})"
+        datetime_pattern = r"on (\d{1,2} \w{3} \d{4} \d{2}:\d{2})"
     else:
         amount_pattern = r"S\$([\d,]+(?:\.\d{1,2})?)"
-        sender_pattern = r"^([A-Z ]+?) has sent you"
+        sender_pattern = r"^(.*?)\s+has sent"
         receiver_pattern = r"ending (\d{4})"
         datetime_pattern = r"on (\d{1,2} \w{3} \d{4} \d{2}:\d{2})"
 
@@ -187,7 +194,7 @@ def parseDBSNotification(title: str, content: str, timestamp: str):
         
     if notification_type == "Gmail Notification":
         amount_pattern = r"You received SGD ([\d,]+(?:\.\d{1,2})?) from"
-        sender_pattern = r"from ([A-Z ]+) to"
+        sender_pattern = r"from\s+(.+?)\s+to"
         receiver_pattern = r"A/C ending (\d{4}) on"
         datetime_pattern = r"on (\d{1,2} \w{3} \d{2,4} \d{2}:\d{2}) ?([A-Z]{3})?"
 
@@ -214,7 +221,7 @@ def parseDBSNotification(title: str, content: str, timestamp: str):
             return None
     else:
         amount_pattern = r"SGD\s?([\d.]+)"
-        sender_pattern = r"from\s+([A-Z ]{3,})(?=\s+on)"
+        sender_pattern = r"from\s+(.+?)(?=\s+on)"
         datetime_pattern = r"on (\d{1,2} \w{3} \d{1,2}:\d{2})"
 
         amount_match = re.search(amount_pattern, message, re.IGNORECASE)

@@ -1,5 +1,7 @@
 import datetime, hashlib, os, sys, pytz, aiofiles
 
+from pathlib import Path
+
 def getDirectoryPath():
     return os.path.join(os.path.dirname(__file__)).replace('\\', '/')
 
@@ -9,6 +11,17 @@ def getPath(path):
     
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_dir, path)
+
+def getPersistentDir():
+    if sys.platform == "win32":
+        path = Path(os.environ.get("USERPROFILE", "C:/")) / "Documents"
+    else:
+        path = Path("/root")
+
+    return os.path.join(path, "Transaction Forwarder")
+
+def deployMode():
+    return getattr(sys, 'frozen', False) or '__compiled__' in globals()
 
 def getCurrentTimeZoneDT(country_code = "SG"):
     if country_code == 'AUS':

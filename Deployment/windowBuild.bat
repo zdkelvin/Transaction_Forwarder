@@ -6,6 +6,7 @@ set VENV_PATH=%PROJECT_PATH%\venv
 set PROJECT_NAME=Transaction Forwarder
 set BUILD_DIR=Build\Window
 set SOURCE=main.py
+set OUTPUT_EXE=transactionForwarder.exe
 
 echo [INFO] %PROJECT_NAME% - Build Script
 echo ======================================
@@ -56,7 +57,7 @@ if exist "Assets" (
 
 echo [INFO] Building with Nuitka...
 echo   Source: %SOURCE%
-echo   Output: %BUILD_DIR%
+echo   Output: %BUILD_DIR%\%OUTPUT_EXE%
 echo   Jobs: 8 (parallel compilation)
 
 set START_TIME=%TIME%
@@ -64,6 +65,7 @@ python -m nuitka --onefile ^
   --windows-console-mode=force ^
   --include-data-dir=Assets=Assets ^
   --output-dir=%BUILD_DIR% ^
+  --output-filename=%OUTPUT_EXE% ^
   --remove-output ^
   --lto=yes ^
   --jobs=8 ^
@@ -83,10 +85,10 @@ if %BUILD_ERRORLEVEL% EQU 0 (
     echo ======================================
     
     echo [INFO] Build details:
-    echo   Output: %BUILD_DIR%\%SOURCE:.py=.exe%
+    echo   Output: %BUILD_DIR%\%OUTPUT_EXE%
     
-    if exist "%BUILD_DIR%\%SOURCE:.py=.exe%" (
-        for %%F in ("%BUILD_DIR%\%SOURCE:.py=.exe%") do (
+    if exist "%BUILD_DIR%\%OUTPUT_EXE%" (
+        for %%F in ("%BUILD_DIR%\%OUTPUT_EXE%") do (
             set FILE_SIZE=%%~zF
             set /a FILE_SIZE_MB=!FILE_SIZE!/1048576
             set /a FILE_SIZE_KB=!FILE_SIZE!/1024

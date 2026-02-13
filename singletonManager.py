@@ -28,6 +28,6 @@ def DeviceManager():
     global device_manager_instance
     with device_manager_lock:
         if device_manager_instance is None:
-            from MasterServer.deviceManagerInstace import DeviceManagerInstance
+            from MasterServer.deviceManagerInstance import DeviceManagerInstance
             device_manager_instance = DeviceManagerInstance()
     return device_manager_instance

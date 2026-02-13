@@ -63,17 +63,28 @@ class DeviceManagerInstance:
                 request.account_number
             ):
                 return {"code": "409", "success": False, "message": "Account already bound on other device."}
-
-            result = await singletonManager.DBManager().app_notification_info_db.bindDeviceAccounts(
+            
+            update_result, device_data = await singletonManager.DBManager().app_notification_info_db.tryBindDeviceAccounts(
                 request.device_id,
                 request.device_name,
                 request.app_name,
                 request.account_number
             )
 
-            if result:
-                asyncio.create_task(self.deviceConfigUpdated(request.device_id))
-                return {"code": "200", "success": True, "message": "Notification device accounts bind successfully."}
+            if update_result == False:
+                return {"code": "400", "success": False, "message": "Failed to bind notification device accounts."}
+            
+            sync_result = await self.syncDeviceConfig(request.device_id, device_data)
+            if sync_result:
+                result = await singletonManager.DBManager().app_notification_info_db.bindDeviceAccounts(
+                    request.device_id,
+                    request.device_name,
+                    request.app_name,
+                    request.account_number
+                )
+
+                if result:
+                    return {"code": "200", "success": True, "message": "Notification device accounts bind successfully."}
             
             return {"code": "400", "success": False, "message": "Failed to bind notification device accounts."}
         except Exception as e:
@@ -81,16 +92,24 @@ class DeviceManagerInstance:
         
     async def unbindDeviceAccounts(self, request: AccountRegisterationData):
         try:
-            result = await singletonManager.DBManager().app_notification_info_db.unbindDeviceAccounts(
+            update_result, device_data = await singletonManager.DBManager().app_notification_info_db.tryUnbindDeviceAccounts(
                 request.device_id,
                 request.device_name,
                 request.app_name,
                 request.account_number
             )
 
-            if result:
-                asyncio.create_task(self.deviceConfigUpdated(request.device_id))
-                return {"code": "200", "success": True, "message": "Notification device accounts unbound successfully."}
+            sync_result = await self.syncDeviceConfig(request.device_id, device_data)
+            if sync_result:
+                result = await singletonManager.DBManager().app_notification_info_db.unbindDeviceAccounts(
+                    request.device_id,
+                    request.device_name,
+                    request.app_name,
+                    request.account_number
+                )
+
+                if result:
+                    return {"code": "200", "success": True, "message": "Notification device accounts unbound successfully."}
             
             return {"code": "404", "success": False, "message": "Failed to unbind notification device accounts."}
         except Exception as e:
@@ -131,8 +150,10 @@ class DeviceManagerInstance:
                 "notification_content_original": request.content,
                 "date_time": date_time
             }
+            LoggingSystem.apiLog(logging.INFO, f"{payload_json}")
             signature = f"{device_id}{date_time}{self.secret_key}{bank_code}"
             hashed_signature = GeneralUtils.hashSignature(signature)
+            LoggingSystem.apiLog(logging.INFO, f'Generated signature for new notification: {signature} : {hashed_signature}')
             request_headers = self.request_headers.copy()
             request_headers["X-Signature"] = hashed_signature
             request_headers["X-Timestamp"] = date_time_unix
@@ -149,6 +170,51 @@ class DeviceManagerInstance:
         except Exception as e: 
             LoggingSystem.apiLog(logging.ERROR, f'Error when get task server for new notification posted: {e}')
             return {"code": "500", "success": False, "message": f"Error when get task server for new notification posted."}
+        
+    async def syncDeviceConfig(self, device_id: str, device_data: Devices):
+        try:
+            domain = singletonManager.DBManager().server_info_db.getUserDomain(self.is_production)
+            if domain is None:
+                LoggingSystem.apiLog(logging.ERROR, 'Server domain is not configured properly.')
+                return
+
+            date_time = GeneralUtils.getCurrentDT_String()
+            date_time_unix = GeneralUtils.convertToTimestamp(date_time, '%d%m%Y_%H%M%S')
+            url = f"{domain}bind_platform_bank_device"
+            if device_data is None:
+                payload_json = {
+                    "device_id": device_id,
+                    "device_name": "",
+                    "accounts": {}
+                }
+            else:
+                account_json = {}
+                for app in device_data.apps:
+                    account_json.setdefault(app.bank_code, []).extend(app.account_list)
+                payload_json = {
+                    "device_id": device_id,
+                    "device_name": device_data.name,
+                    "accounts": account_json
+                }
+
+            signature = f"{device_id}{self.secret_key}{date_time}"
+            hashed_signature = GeneralUtils.hashSignature(signature)
+            LoggingSystem.apiLog(logging.INFO, f'Generated signature for device config update: {signature} : {hashed_signature}')
+            request_headers = self.request_headers.copy()
+            request_headers["X-Signature"] = hashed_signature
+            request_headers["X-Timestamp"] = date_time_unix
+            request_headers["X-Device-ID"] = device_id
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json = payload_json, headers = request_headers, timeout = 30)
+                if response.status_code == 200:
+                    LoggingSystem.apiLog(logging.INFO, f'Device config update notified successfully to {url} for device ID {device_id}.')
+                    return True
+                else:
+                    LoggingSystem.apiLog(logging.ERROR, f'Failed to notify device config update to {url} for device ID {device_id}. Response code: {response.status_code}')
+                    return False
+        except Exception as e:
+            LoggingSystem.apiLog(logging.ERROR, f'Error when notifying device config update for device ID {device_id}: {e}')
+            return False
         
     async def deviceConfigUpdated(self, device_id: str):
         try:
@@ -181,6 +247,7 @@ class DeviceManagerInstance:
 
             signature = f"{device_id}{self.secret_key}{date_time}"
             hashed_signature = GeneralUtils.hashSignature(signature)
+            LoggingSystem.apiLog(logging.INFO, f'Generated signature for device config update: {signature} : {hashed_signature}')
             request_headers = self.request_headers.copy()
             request_headers["X-Signature"] = hashed_signature
             request_headers["X-Timestamp"] = date_time_unix
@@ -189,8 +256,10 @@ class DeviceManagerInstance:
                 response = await client.post(url, json = payload_json, headers = request_headers, timeout = 30)
                 if response.status_code == 200:
                     LoggingSystem.apiLog(logging.INFO, f'Device config update notified successfully to {url} for device ID {device_id}.')
+                    return True
                 else:
                     LoggingSystem.apiLog(logging.ERROR, f'Failed to notify device config update to {url} for device ID {device_id}. Response code: {response.status_code}')
+                    return False
         except Exception as e:
             LoggingSystem.apiLog(logging.ERROR, f'Error when notifying device config update for device ID {device_id}: {e}')
-            return
+            return False
