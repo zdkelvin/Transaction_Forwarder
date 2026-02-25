@@ -1,4 +1,4 @@
-import json, logging, aiofiles, os
+import json, logging, aiofiles, os, copy
 import Utils.generalUtils as GeneralUtils
 
 from typing import Dict, List, Optional, Tuple
@@ -57,25 +57,25 @@ class DBDevicesInfo():
     async def tryBindDeviceAccounts(self, device_id: str, device_name: str, app_name: str, account: str):
         try:
             if device_id not in self.register_devices:
-                self.register_devices[device_id] = Devices(apps=[])
+                device_data = Devices(apps=[])
+            else:
+                device_data = copy.deepcopy(self.register_devices[device_id])
             
             bank_code = getBankCodeByAppName(app_name)
             if bank_code is None:
                 LoggingSystem.serverLog(logging.ERROR, f"Invalid app name: {app_name} for device to bind accounts: {device_id}.")
                 return (False, None)
             
-            device: Devices = self.register_devices[device_id]
-            device.name = device_name
-            app = next((app for app in device.apps if app.app_name == app_name), None)
+            device_data.name = device_name
+            app = next((app for app in device_data.apps if app.app_name == app_name), None)
             if app is None:
                 external_app_name = getBankExternalAppName(bank_code)
                 app = App(bank_code = bank_code, app_name = app_name, external_app_name = external_app_name, account_list = [account])
-                device.apps.append(app)
+                device_data.apps.append(app)
             else:
                 if account not in app.account_list:
                     app.account_list.append(account)
 
-            device_data = self.register_devices[device_id]
             return (True, device_data)
         except Exception as e:
             LoggingSystem.serverLog(logging.ERROR, f"Failed to bind accounts to notification device: {str(e)}")
@@ -87,16 +87,15 @@ class DBDevicesInfo():
                 LoggingSystem.serverLog(logging.ERROR, f"Device ID {device_id} not found in notification devices.")
                 return (False, None)
             
-            device: Devices = self.register_devices[device_id]
-            app = next((app for app in device.apps if app.app_name == app_name), None)
+            device_data = copy.deepcopy(self.register_devices[device_id])
+            app = next((app for app in device_data.apps if app.app_name == app_name), None)
             if app:
                 if account in app.account_list:
                     app.account_list.remove(account)
 
                 if len(app.account_list) == 0:
-                    device.apps.remove(app)
+                    device_data.apps.remove(app)
 
-            device_data = self.register_devices[device_id]
             return (True, device_data)
         except Exception as e:
             LoggingSystem.serverLog(logging.ERROR, f"Failed to unbind accounts from notification device: {str(e)}")

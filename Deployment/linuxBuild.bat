@@ -67,7 +67,7 @@ docker run --rm ^
   -v "%CD%\%BUILD_DIR%:/output" ^
   -w /app ^
   ubuntu:22.04 ^
-  sh -c "apt-get update && apt-get install -y patchelf gcc g++ python3.10 python3-pip python3.10-venv && python3.10 -m venv /venv && /venv/bin/pip install --upgrade pip && /venv/bin/pip install nuitka && /venv/bin/pip install -r requirements.txt && /venv/bin/python -m nuitka --onefile --follow-imports --assume-yes-for-downloads --include-data-files=assets/*=Assets/ --output-filename=transactionForwarder.bin %SOURCE% && cp /app/transactionForwarder.bin /output/"
+  sh -c "apt-get update && apt-get install -y patchelf gcc g++ python3.10 python3-pip python3.10-venv ca-certificates && python3.10 -m venv /venv && /venv/bin/pip install --upgrade pip && echo '=== Installing requirements ===' && /venv/bin/pip install -r requirements.txt && echo '=== Build Command ===' && /venv/bin/python -m nuitka --onefile --follow-imports --include-package=httpx --include-package=httpcore --include-package=anyio --include-package=certifi --include-package=h11 --include-package=aiofiles --include-package=uvicorn --include-data-files=/venv/lib/python3.10/site-packages/certifi/cacert.pem=certifi/cacert.pem --include-data-files=assets/*=Assets/ --assume-yes-for-downloads --output-filename=transactionForwarder.bin %SOURCE% && cp /app/transactionForwarder.bin /output/"
 
 set BUILD_ERRORLEVEL=%ERRORLEVEL%
 set END_TIME=%TIME%

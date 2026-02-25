@@ -44,7 +44,7 @@ def getCurrentDate_String():
 def convertToTimestamp(dateTime: str, format: str) -> str:
     dt_object = datetime.datetime.strptime(dateTime, format)
     timestamp = dt_object.timestamp()
-    return str(timestamp)
+    return str(int(timestamp))
     
 async def saveTextFile(filename, content):
     async with aiofiles.open(filename, 'w') as file:

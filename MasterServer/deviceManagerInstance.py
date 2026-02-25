@@ -22,7 +22,7 @@ class DeviceManagerInstance:
             "User-Agent": "GMPay/TransactionForwarder",
             "X-Signature": "",
             "X-Timestamp": "",
-            "X-DeviceID": ""
+            "X-Device-ID": ""
         }
         self.is_production = singletonManager.DBManager().server_info_db.server_config.production_mode
         self.user = singletonManager.DBManager().server_info_db.server_config.user
@@ -199,13 +199,15 @@ class DeviceManagerInstance:
 
             signature = f"{device_id}{self.secret_key}{date_time}"
             hashed_signature = GeneralUtils.hashSignature(signature)
-            LoggingSystem.apiLog(logging.INFO, f'Generated signature for device config update: {signature} : {hashed_signature}')
             request_headers = self.request_headers.copy()
             request_headers["X-Signature"] = hashed_signature
             request_headers["X-Timestamp"] = date_time_unix
             request_headers["X-Device-ID"] = device_id
+            LoggingSystem.apiLog(logging.INFO, f"Url: {url}")
+            LoggingSystem.apiLog(logging.INFO, f'Syncing device config for device ID {device_id} with data: {payload_json}, headers: {request_headers}')
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json = payload_json, headers = request_headers, timeout = 30)
+                LoggingSystem.apiLog(logging.INFO, f"Response Status Code: {response.status_code}")
                 if response.status_code == 200:
                     LoggingSystem.apiLog(logging.INFO, f'Device config update notified successfully to {url} for device ID {device_id}.')
                     return True
@@ -247,7 +249,6 @@ class DeviceManagerInstance:
 
             signature = f"{device_id}{self.secret_key}{date_time}"
             hashed_signature = GeneralUtils.hashSignature(signature)
-            LoggingSystem.apiLog(logging.INFO, f'Generated signature for device config update: {signature} : {hashed_signature}')
             request_headers = self.request_headers.copy()
             request_headers["X-Signature"] = hashed_signature
             request_headers["X-Timestamp"] = date_time_unix
